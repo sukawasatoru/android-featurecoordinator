@@ -1,0 +1,90 @@
+/*
+ * Copyright 2018 sukawasatoru
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+buildscript {
+    repositories {
+        google()
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+        jcenter()
+    }
+
+    dependencies {
+        classpath Depends.gradle.android
+        classpath Depends.gradle.kotlin
+        classpath Depends.gradle.errorprone
+    }
+}
+
+plugins {
+    id 'org.sonarqube' version '2.6.2'
+}
+
+apply plugin: 'versioning'
+
+sonarqube {
+    properties {
+        property 'sonar.android.lint.report', 'build/reports/lint-results.xml'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        jcenter()
+    }
+}
+
+def setupAndroidPlugin = { isCi, project ->
+    project.android {
+        compileSdkVersion Versions.manifest.compileSdk
+        buildToolsVersion Versions.manifest.buildTools
+
+        defaultConfig {
+            minSdkVersion Versions.manifest.minSdk
+            targetSdkVersion Versions.manifest.targetSdk
+        }
+
+        dexOptions {
+            preDexLibraries = !isCi
+        }
+
+        compileOptions {
+            sourceCompatibility = JavaVersion.VERSION_1_8
+            targetCompatibility = JavaVersion.VERSION_1_8
+        }
+    }
+}.curry(System.getenv('CI') == 'true')
+
+subprojects {
+    project.plugins.whenPluginAdded {
+        switch (it.class.name) {
+            case 'com.android.build.gradle.AppPlugin':
+            case 'com.android.build.gradle.LibraryPlugin':
+                setupAndroidPlugin(project)
+                break
+            default:
+                break
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
