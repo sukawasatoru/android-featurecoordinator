@@ -33,6 +33,20 @@ public final class FeatureCoordinator {
     }
 
     public static boolean isAvailable(Context context, Class<? extends Feature> feature) {
+        final Availability debugAvailability =
+                DebugFeatureCoordinator.getAvailabilityImpl(context, feature);
+        if (debugAvailability != Availability.NOTHING) {
+            return debugAvailability == Availability.AVAILABLE;
+        }
+
+        return isAvailableImpl(context, feature);
+    }
+
+    public static void clear() {
+        sCache.clear();
+    }
+
+    static boolean isAvailableImpl(Context context, Class<? extends Feature> feature) {
         synchronized (feature) {
             FeatureCache cache = sCache.get(feature);
             if (cache == null) {
@@ -53,10 +67,6 @@ public final class FeatureCoordinator {
 
             return isAvailable;
         }
-    }
-
-    public static void clear() {
-        sCache.clear();
     }
 
     private static Feature createInstance(Class<? extends Feature> feature) {
