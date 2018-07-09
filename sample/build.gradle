@@ -15,7 +15,12 @@
  *
  */
 
+plugins {
+    id "org.gradle.android.cache-fix" version "0.5.1"
+}
+
 apply plugin: 'com.android.application'
+apply plugin: 'net.ltgt.errorprone'
 apply plugin: 'versioning'
 
 android {
@@ -24,8 +29,17 @@ android {
         versionCode appVersion.versionCode
         versionName appVersion.versionName
     }
+
+    dataBinding {
+        enabled = true
+    }
 }
 
 dependencies {
     implementation project(':library')
+    implementation Depends.arch.lifecycle
+    implementation Depends.support.annotations
+    implementation Depends.support.constraint
+    implementation Depends.support.leanback
+    annotationProcessor Depends.arch.lifecycleCompiler
 }
